@@ -76,10 +76,10 @@ const formatTrend = (trend, trendType) => {
   )
 }
 
-export function SectionCards({userRole = 'system_admin', 
+export function SectionCards({stats, userRole = 'system_admin', 
   timeRange = '30d',}) {
     const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange)
-
+    const cardStata = use(stats)
     const handleTimeRangeChange = (newRange) => {
     setSelectedTimeRange(newRange)
     
