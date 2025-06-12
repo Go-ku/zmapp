@@ -13,18 +13,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-const StatCard = ({
-  stats,
-  id,
-  title,
-  value,
-  trend,
-  trendType,
-  icon,
-  subtitle,
-  color = "blue",
-  onClick,
-}) => {
+const StatCard = ({ stats }) => {
+  const { title, value, trend, trendType, subtitle } = stats;
   const formatTrend = (trend, trendType) => {
     if (trend === 0 || trend === null || trend === undefined) {
       return { display: "0%", color: "text-gray-500" };
@@ -84,7 +74,7 @@ const StatCard = ({
 export default function SectionCards({ stats, userRole = "system_admin" }) {
   // const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange)
   const cardStats = use(stats);
-  console.log(cardStats)
+  console.log(cardStats);
   // const handleTimeRangeChange = (newRange) => {
   // setSelectedTimeRange(newRange)
 
@@ -100,7 +90,6 @@ export default function SectionCards({ stats, userRole = "system_admin" }) {
     <>
       <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
         {cardStats.map((card) => (
-            console.log(card)
           <StatCard stats={card} key={card.id} />
         ))}
       </div>
