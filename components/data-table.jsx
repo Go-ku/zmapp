@@ -2,34 +2,28 @@
 
 import * as React from "react"
 import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis } from "@dnd-kit/modifiers"
-import {
-  arrayMove,
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
-import { CSS } from "@dnd-kit/utilities"
-import {
+  IconBuilding,
+  IconCalendar,
   IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconChevronsLeft,
   IconChevronsRight,
   IconCircleCheckFilled,
+  IconCurrencyDollar,
   IconDotsVertical,
-  IconGripVertical,
   IconLayoutColumns,
-  IconLoader,
   IconPlus,
+  IconUser,
+  IconUsers,
+  IconPhone,
+  IconMail,
+  IconMapPin,
+  IconClock,
+  IconAlertTriangle,
+  IconSend,
+  IconReceipt,
+  IconFileText,
   IconTrendingUp,
 } from "@tabler/icons-react"
 import {
@@ -80,57 +74,299 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs"
 
-export const schema = z.object({
-  id: z.number(),
-  header: z.string(),
-  type: z.string(),
-  status: z.string(),
-  target: z.string(),
-  limit: z.string(),
-  reviewer: z.string(),
-})
+// Table components
+const Table = ({ children, ...props }) => (
+  <table className="w-full caption-bottom text-sm" {...props}>
+    {children}
+  </table>
+)
 
-// Create a separate component for the drag handle
-function DragHandle({
-  id
-}) {
-  const { attributes, listeners } = useSortable({
-    id,
-  })
+const TableHeader = ({ children, ...props }) => (
+  <thead className="[&_tr]:border-b" {...props}>
+    {children}
+  </thead>
+)
 
-  return (
-    <Button
-      {...attributes}
-      {...listeners}
-      variant="ghost"
-      size="icon"
-      className="text-muted-foreground size-7 hover:bg-transparent">
-      <IconGripVertical className="text-muted-foreground size-3" />
-      <span className="sr-only">Drag to reorder</span>
-    </Button>
-  );
+const TableBody = ({ children, ...props }) => (
+  <tbody className="[&_tr:last-child]:border-0" {...props}>
+    {children}
+  </tbody>
+)
+
+const TableHead = ({ children, className = "", ...props }) => (
+  <th className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+    {children}
+  </th>
+)
+
+const TableRow = ({ children, className = "", ...props }) => (
+  <tr className={`border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted ${className}`} {...props}>
+    {children}
+  </tr>
+)
+
+const TableCell = ({ children, className = "", ...props }) => (
+  <td className={`p-4 align-middle [&:has([role=checkbox])]:pr-0 ${className}`} {...props}>
+    {children}
+  </td>
+)
+
+// User roles for demonstration
+const USER_ROLES = {
+  SYSTEM_ADMIN: "system_admin",
+  LANDLORD: "landlord", 
+  TENANT: "tenant",
+  ADMIN: "admin"
 }
 
-const columns = [
+// Mock user context - in real app this would come from auth
+const currentUser = {
+  role: USER_ROLES.LANDLORD,
+  id: "landlord_001",
+  name: "John Doe"
+}
+
+export const propertySchema = z.object({
+  id: z.string(),
+  propertyName: z.string(),
+  tenant: z.string(),
+  rentAmount: z.number(),
+  status: z.string(),
+  dueDate: z.string(),
+  paymentStatus: z.string(),
+  landlord: z.string(),
+  location: z.string(),
+  propertyType: z.string(),
+  lastPayment: z.string(),
+  balance: z.number(),
+  approvalStatus: z.string().optional(),
+})
+
+export const paymentsSchema = z.object({
+  id: z.string(),
+  property: z.string(),
+  tenant: z.string(),
+  amount: z.number(),
+  date: z.string(),
+  status: z.string(),
+  method: z.string(),
+  reference: z.string(),
+  approvedBy: z.string().optional(),
+  needsApproval: z.boolean(),
+})
+
+export const tenantsSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string(),
+  property: z.string(),
+  rentAmount: z.number(),
+  leaseStart: z.string(),
+  leaseEnd: z.string(),
+  status: z.string(),
+  balance: z.number(),
+})
+
+// Sample data
+const propertyData = [
   {
-    id: "drag",
-    header: () => null,
-    cell: ({ row }) => <DragHandle id={row.original.id} />,
+    id: "prop_001",
+    propertyName: "Sunset Apartments Unit 101",
+    tenant: "Jane Smith",
+    rentAmount: 8500,
+    status: "Occupied",
+    dueDate: "2025-06-15",
+    paymentStatus: "Overdue",
+    landlord: "John Doe",
+    location: "Lusaka, Zambia",
+    propertyType: "Apartment",
+    lastPayment: "2025-05-15",
+    balance: -2500,
+    approvalStatus: "pending"
   },
+  {
+    id: "prop_002", 
+    propertyName: "Garden View House",
+    tenant: "Mike Johnson",
+    rentAmount: 12000,
+    status: "Occupied",
+    dueDate: "2025-06-20",
+    paymentStatus: "Paid",
+    landlord: "John Doe",
+    location: "Lusaka, Zambia",
+    propertyType: "House",
+    lastPayment: "2025-06-18",
+    balance: 0,
+    approvalStatus: "approved"
+  },
+  {
+    id: "prop_003",
+    propertyName: "City Center Studio",
+    tenant: "Sarah Wilson",
+    rentAmount: 6000,
+    status: "Occupied", 
+    dueDate: "2025-06-10",
+    paymentStatus: "Pending",
+    landlord: "John Doe",
+    location: "Lusaka, Zambia",
+    propertyType: "Studio",
+    lastPayment: "2025-05-10",
+    balance: -1000,
+    approvalStatus: "pending"
+  },
+  {
+    id: "prop_004",
+    propertyName: "Executive Townhouse",
+    tenant: "David Brown",
+    rentAmount: 15000,
+    status: "Occupied",
+    dueDate: "2025-06-25",
+    paymentStatus: "Paid",
+    landlord: "John Doe",
+    location: "Lusaka, Zambia",
+    propertyType: "Townhouse",
+    lastPayment: "2025-06-22",
+    balance: 0,
+    approvalStatus: "approved"
+  },
+  {
+    id: "prop_005",
+    propertyName: "Modern Flat B12",
+    tenant: "Lisa Garcia",
+    rentAmount: 7500,
+    status: "Occupied",
+    dueDate: "2025-06-30",
+    paymentStatus: "Overdue",
+    landlord: "John Doe",
+    location: "Lusaka, Zambia",
+    propertyType: "Apartment",
+    lastPayment: "2025-05-30",
+    balance: -3500,
+    approvalStatus: "pending"
+  }
+]
+
+const paymentData = [
+  {
+    id: "pay_001",
+    property: "Sunset Apartments Unit 101",
+    tenant: "Jane Smith", 
+    amount: 8500,
+    date: "2025-06-12",
+    status: "Pending Approval",
+    method: "Bank Transfer",
+    reference: "TXN123456",
+    needsApproval: true
+  },
+  {
+    id: "pay_002",
+    property: "Garden View House",
+    tenant: "Mike Johnson",
+    amount: 12000, 
+    date: "2025-06-18",
+    status: "Approved",
+    method: "Mobile Money",
+    reference: "MM789012",
+    approvedBy: "John Doe",
+    needsApproval: false
+  },
+  {
+    id: "pay_003",
+    property: "Executive Townhouse",
+    tenant: "David Brown",
+    amount: 15000,
+    date: "2025-06-22",
+    status: "Approved",
+    method: "Cash",
+    reference: "CASH345678",
+    approvedBy: "John Doe",
+    needsApproval: false
+  },
+  {
+    id: "pay_004",
+    property: "Modern Flat B12",
+    tenant: "Lisa Garcia",
+    amount: 7500,
+    date: "2025-06-11",
+    status: "Pending Approval",
+    method: "Mobile Money",
+    reference: "MM456789",
+    needsApproval: true
+  }
+]
+
+const tenantData = [
+  {
+    id: "ten_001",
+    name: "Jane Smith",
+    email: "jane.smith@email.com",
+    phone: "+260 97 123 4567",
+    property: "Sunset Apartments Unit 101", 
+    rentAmount: 8500,
+    leaseStart: "2024-01-01",
+    leaseEnd: "2025-12-31",
+    status: "Active",
+    balance: -2500
+  },
+  {
+    id: "ten_002",
+    name: "Mike Johnson", 
+    email: "mike.johnson@email.com",
+    phone: "+260 97 234 5678",
+    property: "Garden View House",
+    rentAmount: 12000,
+    leaseStart: "2024-06-01", 
+    leaseEnd: "2026-05-31",
+    status: "Active",
+    balance: 0
+  },
+  {
+    id: "ten_003",
+    name: "Sarah Wilson",
+    email: "sarah.wilson@email.com",
+    phone: "+260 97 345 6789",
+    property: "City Center Studio",
+    rentAmount: 6000,
+    leaseStart: "2024-03-01",
+    leaseEnd: "2025-02-28",
+    status: "Active",
+    balance: -1000
+  },
+  {
+    id: "ten_004",
+    name: "David Brown",
+    email: "david.brown@email.com",
+    phone: "+260 97 456 7890",
+    property: "Executive Townhouse",
+    rentAmount: 15000,
+    leaseStart: "2024-08-01",
+    leaseEnd: "2026-07-31",
+    status: "Active",
+    balance: 0
+  },
+  {
+    id: "ten_005",
+    name: "Lisa Garcia",
+    email: "lisa.garcia@email.com",
+    phone: "+260 97 567 8901",
+    property: "Modern Flat B12",
+    rentAmount: 7500,
+    leaseStart: "2024-04-01",
+    leaseEnd: "2025-03-31",
+    status: "Active",
+    balance: -3500
+  }
+]
+
+// Property columns
+const propertyColumns = [
   {
     id: "select",
     header: ({ table }) => (
@@ -156,120 +392,77 @@ const columns = [
     enableHiding: false,
   },
   {
-    accessorKey: "header",
-    header: "Header",
+    accessorKey: "propertyName",
+    header: "Property",
     cell: ({ row }) => {
-      return <TableCellViewer item={row.original} />;
+      return <PropertyViewer item={row.original} />;
     },
     enableHiding: false,
   },
   {
-    accessorKey: "type",
-    header: "Section Type",
+    accessorKey: "tenant",
+    header: "Tenant",
     cell: ({ row }) => (
-      <div className="w-32">
-        <Badge variant="outline" className="text-muted-foreground px-1.5">
-          {row.original.type}
-        </Badge>
+      <div className="flex items-center gap-2">
+        <IconUser className="size-4 text-muted-foreground" />
+        <span>{row.original.tenant}</span>
       </div>
     ),
   },
   {
-    accessorKey: "status",
-    header: "Status",
+    accessorKey: "rentAmount",
+    header: () => <div className="text-right">Rent Amount</div>,
     cell: ({ row }) => (
-      <Badge variant="outline" className="text-muted-foreground px-1.5">
-        {row.original.status === "Done" ? (
-          <IconCircleCheckFilled className="fill-green-500 dark:fill-green-400" />
-        ) : (
-          <IconLoader />
-        )}
-        {row.original.status}
-      </Badge>
+      <div className="text-right font-mono">
+        K{row.original.rentAmount.toLocaleString()}
+      </div>
     ),
   },
   {
-    accessorKey: "target",
-    header: () => <div className="w-full text-right">Target</div>,
-    cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          })
-        }}>
-        <Label htmlFor={`${row.original.id}-target`} className="sr-only">
-          Target
-        </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.target}
-          id={`${row.original.id}-target`} />
-      </form>
-    ),
-  },
-  {
-    accessorKey: "limit",
-    header: () => <div className="w-full text-right">Limit</div>,
-    cell: ({ row }) => (
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          toast.promise(new Promise((resolve) => setTimeout(resolve, 1000)), {
-            loading: `Saving ${row.original.header}`,
-            success: "Done",
-            error: "Error",
-          })
-        }}>
-        <Label htmlFor={`${row.original.id}-limit`} className="sr-only">
-          Limit
-        </Label>
-        <Input
-          className="hover:bg-input/30 focus-visible:bg-background dark:hover:bg-input/30 dark:focus-visible:bg-input/30 h-8 w-16 border-transparent bg-transparent text-right shadow-none focus-visible:border dark:bg-transparent"
-          defaultValue={row.original.limit}
-          id={`${row.original.id}-limit`} />
-      </form>
-    ),
-  },
-  {
-    accessorKey: "reviewer",
-    header: "Reviewer",
+    accessorKey: "paymentStatus",
+    header: "Payment Status",
     cell: ({ row }) => {
-      const isAssigned = row.original.reviewer !== "Assign reviewer"
-
-      if (isAssigned) {
-        return row.original.reviewer
-      }
-
+      const status = row.original.paymentStatus
       return (
-        <>
-          <Label htmlFor={`${row.original.id}-reviewer`} className="sr-only">
-            Reviewer
-          </Label>
-          <Select>
-            <SelectTrigger
-              className="w-38 **:data-[slot=select-value]:block **:data-[slot=select-value]:truncate"
-              size="sm"
-              id={`${row.original.id}-reviewer`}>
-              <SelectValue placeholder="Assign reviewer" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-              <SelectItem value="Jamik Tashpulatov">
-                Jamik Tashpulatov
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </>
-      );
+        <Badge 
+          variant={
+            status === "Paid" ? "default" : 
+            status === "Overdue" ? "destructive" : "secondary"
+          }
+          className="text-xs">
+          {status === "Paid" && <IconCircleCheckFilled className="mr-1 size-3" />}
+          {status === "Overdue" && <IconAlertTriangle className="mr-1 size-3" />}
+          {status === "Pending" && <IconClock className="mr-1 size-3" />}
+          {status}
+        </Badge>
+      )
+    },
+  },
+  {
+    accessorKey: "dueDate",
+    header: "Due Date",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <IconCalendar className="size-4 text-muted-foreground" />
+        <span>{new Date(row.original.dueDate).toLocaleDateString()}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "balance",
+    header: () => <div className="text-right">Balance</div>,
+    cell: ({ row }) => {
+      const balance = row.original.balance
+      return (
+        <div className={`text-right font-mono ${balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {balance < 0 ? '-' : ''}K{Math.abs(balance).toLocaleString()}
+        </div>
+      )
     },
   },
   {
     id: "actions",
-    cell: () => (
+    cell: ({ row }) => (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -280,65 +473,406 @@ const columns = [
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-32">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Make a copy</DropdownMenuItem>
-          <DropdownMenuItem>Favorite</DropdownMenuItem>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem>
+            <IconFileText className="mr-2 size-4" />
+            View Lease
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconReceipt className="mr-2 size-4" />
+            Payment History
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconSend className="mr-2 size-4" />
+            Send Reminder
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">Delete</DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconPhone className="mr-2 size-4" />
+            WhatsApp Tenant
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     ),
   },
 ]
 
-function DraggableRow({
-  row
+// Payment columns
+const paymentColumns = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all" />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row" />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "reference",
+    header: "Reference",
+    cell: ({ row }) => (
+      <div className="font-mono text-sm">{row.original.reference}</div>
+    ),
+  },
+  {
+    accessorKey: "property",
+    header: "Property",
+  },
+  {
+    accessorKey: "tenant", 
+    header: "Tenant",
+  },
+  {
+    accessorKey: "amount",
+    header: () => <div className="text-right">Amount</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-mono">
+        K{row.original.amount.toLocaleString()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => (
+      <div>{new Date(row.original.date).toLocaleDateString()}</div>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.status
+      const needsApproval = row.original.needsApproval
+      return (
+        <div className="flex items-center gap-2">
+          <Badge 
+            variant={
+              status === "Approved" ? "default" : 
+              needsApproval ? "secondary" : "outline"
+            }>
+            {needsApproval && <IconClock className="mr-1 size-3" />}
+            {status === "Approved" && <IconCircleCheckFilled className="mr-1 size-3" />}
+            {status}
+          </Badge>
+          {needsApproval && currentUser.role === USER_ROLES.LANDLORD && (
+            <Button size="sm" variant="outline" onClick={() => {
+              toast.success("Payment approved and receipt generated")
+            }}>
+              Approve
+            </Button>
+          )}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "method",
+    header: "Method",
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+            size="icon">
+            <IconDotsVertical />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem>
+            <IconReceipt className="mr-2 size-4" />
+            Generate Receipt
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconSend className="mr-2 size-4" />
+            Send via WhatsApp
+          </DropdownMenuItem>
+          {row.original.needsApproval && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-green-600">
+                <IconCircleCheckFilled className="mr-2 size-4" />
+                Approve Payment
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-red-600">
+                <IconAlertTriangle className="mr-2 size-4" />
+                Reject Payment
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
+]
+
+// Tenant columns
+const tenantColumns = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all" />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center justify-center">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row" />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "name",
+    header: "Tenant Name",
+    cell: ({ row }) => {
+      return <TenantViewer item={row.original} />;
+    },
+    enableHiding: false,
+  },
+  {
+    accessorKey: "property",
+    header: "Property",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <IconBuilding className="size-4 text-muted-foreground" />
+        <span>{row.original.property}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "rentAmount",
+    header: () => <div className="text-right">Rent</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-mono">
+        K{row.original.rentAmount.toLocaleString()}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "leaseEnd",
+    header: "Lease Expires",
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <IconCalendar className="size-4 text-muted-foreground" />
+        <span>{new Date(row.original.leaseEnd).toLocaleDateString()}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => (
+      <Badge variant={row.original.status === "Active" ? "default" : "secondary"}>
+        {row.original.status}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: "balance",
+    header: () => <div className="text-right">Balance</div>,
+    cell: ({ row }) => {
+      const balance = row.original.balance
+      return (
+        <div className={`text-right font-mono ${balance < 0 ? 'text-red-600' : 'text-green-600'}`}>
+          {balance < 0 ? '-' : ''}K{Math.abs(balance).toLocaleString()}
+        </div>
+      )
+    },
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+            size="icon">
+            <IconDotsVertical />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuItem>
+            <IconMail className="mr-2 size-4" />
+            Send Invoice
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconPhone className="mr-2 size-4" />
+            WhatsApp Reminder
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <IconFileText className="mr-2 size-4" />
+            View Lease Agreement
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            <IconReceipt className="mr-2 size-4" />
+            Payment History
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
+]
+
+export function RealEstateDataTable({ 
+  data: initialData, 
+  type = "properties",
+  columns: customColumns 
 }) {
-  const { transform, transition, setNodeRef, isDragging } = useSortable({
-    id: row.original.id,
-  })
+  // Select appropriate columns and data based on type
+  const columns = customColumns || (
+    type === "properties" ? propertyColumns :
+    type === "payments" ? paymentColumns :
+    type === "tenants" ? tenantColumns :
+    propertyColumns
+  )
+
+  const currentData = 
+    type === "properties" ? propertyData :
+    type === "payments" ? paymentData :
+    type === "tenants" ? tenantData :
+    propertyData
 
   return (
-    <TableRow
-      data-state={row.getIsSelected() && "selected"}
-      data-dragging={isDragging}
-      ref={setNodeRef}
-      className="relative z-0 data-[dragging=true]:z-10 data-[dragging=true]:opacity-80"
-      style={{
-        transform: CSS.Transform.toString(transform),
-        transition: transition,
-      }}>
-      {row.getVisibleCells().map((cell) => (
-        <TableCell key={cell.id}>
-          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-        </TableCell>
-      ))}
-    </TableRow>
+    <Tabs defaultValue={type} className="w-full flex-col justify-start gap-6">
+      <div className="flex items-center justify-between px-4 lg:px-6">
+        <Label htmlFor="view-selector" className="sr-only">
+          View
+        </Label>
+        <Select defaultValue={type}>
+          <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
+            <SelectValue placeholder="Select a view" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="properties">Properties</SelectItem>
+            <SelectItem value="payments">Payments</SelectItem>
+            <SelectItem value="tenants">Tenants</SelectItem>
+            <SelectItem value="maintenance">Maintenance</SelectItem>
+          </SelectContent>
+        </Select>
+        <TabsList className="hidden @4xl/main:flex">
+          <TabsTrigger value="properties">
+            <IconBuilding className="mr-2 size-4" />
+            Properties
+            <Badge variant="secondary" className="ml-2">
+              {propertyData.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="payments">
+            <IconCurrencyDollar className="mr-2 size-4" />
+            Payments
+            <Badge variant="secondary" className="ml-2">
+              {paymentData.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="tenants">
+            <IconUsers className="mr-2 size-4" />
+            Tenants
+            <Badge variant="secondary" className="ml-2">
+              {tenantData.length}
+            </Badge>
+          </TabsTrigger>
+          <TabsTrigger value="maintenance">
+            Maintenance
+          </TabsTrigger>
+        </TabsList>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <IconPlus />
+            <span className="hidden lg:inline">Add {type === "properties" ? "Property" : type === "payments" ? "Payment" : type === "tenants" ? "Tenant" : "Item"}</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Properties Tab */}
+      <TabsContent
+        value="properties"
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+        <DataTableComponent 
+          data={propertyData}
+          columns={propertyColumns}
+        />
+      </TabsContent>
+
+      {/* Payments Tab */}
+      <TabsContent
+        value="payments" 
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+        <DataTableComponent 
+          data={paymentData}
+          columns={paymentColumns}
+        />
+      </TabsContent>
+
+      {/* Tenants Tab */}
+      <TabsContent
+        value="tenants"
+        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
+        <DataTableComponent 
+          data={tenantData}
+          columns={tenantColumns}
+        />
+      </TabsContent>
+
+      {/* Maintenance Tab */}
+      <TabsContent
+        value="maintenance"
+        className="flex flex-col px-4 lg:px-6">
+        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed flex items-center justify-center">
+          <div className="text-center">
+            <IconFileText className="mx-auto size-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Maintenance requests will be displayed here</p>
+          </div>
+        </div>
+      </TabsContent>
+    </Tabs>
   );
 }
 
-export function DataTable({
-  data: initialData
-}) {
-  const [data, setData] = React.useState(() => initialData)
+// Generic Data Table Component
+function DataTableComponent({ data, columns }) {
   const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] =
-    React.useState({})
+  const [columnVisibility, setColumnVisibility] = React.useState({})
   const [columnFilters, setColumnFilters] = React.useState([])
   const [sorting, setSorting] = React.useState([])
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: 10,
   })
-  const sortableId = React.useId()
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  )
-
-  const dataIds = React.useMemo(() => data?.map(({ id }) => id) || [], [data])
 
   const table = useReactTable({
     data,
@@ -365,248 +899,214 @@ export function DataTable({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  function handleDragEnd(event) {
-    const { active, over } = event
-    if (active && over && active.id !== over.id) {
-      setData((data) => {
-        const oldIndex = dataIds.indexOf(active.id)
-        const newIndex = dataIds.indexOf(over.id)
-        return arrayMove(data, oldIndex, newIndex);
-      })
-    }
-  }
-
   return (
-    <Tabs defaultValue="outline" className="w-full flex-col justify-start gap-6">
-      <div className="flex items-center justify-between px-4 lg:px-6">
-        <Label htmlFor="view-selector" className="sr-only">
-          View
-        </Label>
-        <Select defaultValue="outline">
-          <SelectTrigger className="flex w-fit @4xl/main:hidden" size="sm" id="view-selector">
-            <SelectValue placeholder="Select a view" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="outline">Outline</SelectItem>
-            <SelectItem value="past-performance">Past Performance</SelectItem>
-            <SelectItem value="key-personnel">Key Personnel</SelectItem>
-            <SelectItem value="focus-documents">Focus Documents</SelectItem>
-          </SelectContent>
-        </Select>
-        <TabsList
-          className="**:data-[slot=badge]:bg-muted-foreground/30 hidden **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 @4xl/main:flex">
-          <TabsTrigger value="outline">Outline</TabsTrigger>
-          <TabsTrigger value="past-performance">
-            Past Performance <Badge variant="secondary">3</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="key-personnel">
-            Key Personnel <Badge variant="secondary">2</Badge>
-          </TabsTrigger>
-          <TabsTrigger value="focus-documents">Focus Documents</TabsTrigger>
-        </TabsList>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <IconLayoutColumns />
-                <span className="hidden lg:inline">Customize Columns</span>
-                <span className="lg:hidden">Columns</span>
-                <IconChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              {table
-                .getAllColumns()
-                .filter((column) =>
-                typeof column.accessorFn !== "undefined" &&
-                column.getCanHide())
-                .map((column) => {
+    <>
+      <div className="flex items-center gap-4 mb-4">
+        <Input
+          placeholder="Filter records..."
+          value={(table.getColumn("propertyName")?.getFilterValue() ?? "") || 
+                 (table.getColumn("name")?.getFilterValue() ?? "") ||
+                 (table.getColumn("reference")?.getFilterValue() ?? "")}
+          onChange={(event) => {
+            const value = event.target.value
+            // Try to set filter on different columns based on what exists
+            table.getColumn("propertyName")?.setFilterValue(value) ||
+            table.getColumn("name")?.setFilterValue(value) ||
+            table.getColumn("reference")?.setFilterValue(value)
+          }}
+          className="max-w-sm"
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <IconLayoutColumns />
+              <span className="hidden lg:inline">Columns</span>
+              <IconChevronDown />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            {table
+              .getAllColumns()
+              .filter((column) =>
+              typeof column.accessorFn !== "undefined" &&
+              column.getCanHide())
+              .map((column) => {
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={column.id}
+                    className="capitalize"
+                    checked={column.getIsVisible()}
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }>
+                    {column.id}
+                  </DropdownMenuCheckboxItem>
+                );
+              })}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border">
+        <Table>
+          <TableHeader className="bg-muted sticky top-0 z-10">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
                   return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }>
-                      {column.id}
-                    </DropdownMenuCheckboxItem>
+                    <TableHead key={header.id} colSpan={header.colSpan}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
                   );
                 })}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" size="sm">
-            <IconPlus />
-            <span className="hidden lg:inline">Add Section</span>
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No results found.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+      <TablePagination table={table} />
+    </>
+  )
+}
+
+// Pagination Component
+function TablePagination({ table }) {
+  return (
+    <div className="flex items-center justify-between px-4">
+      <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
+        {table.getFilteredSelectedRowModel().rows.length} of{" "}
+        {table.getFilteredRowModel().rows.length} row(s) selected.
+      </div>
+      <div className="flex w-full items-center gap-8 lg:w-fit">
+        <div className="hidden items-center gap-2 lg:flex">
+          <Label htmlFor="rows-per-page" className="text-sm font-medium">
+            Rows per page
+          </Label>
+          <Select
+            value={`${table.getState().pagination.pageSize}`}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value))
+            }}>
+            <SelectTrigger size="sm" className="w-20" id="rows-per-page">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 20, 30, 40, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={`${pageSize}`}>
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex w-fit items-center justify-center text-sm font-medium">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
+        </div>
+        <div className="ml-auto flex items-center gap-2 lg:ml-0">
+          <Button
+            variant="outline"
+            className="hidden h-8 w-8 p-0 lg:flex"
+            onClick={() => table.setPageIndex(0)}
+            disabled={!table.getCanPreviousPage()}>
+            <span className="sr-only">Go to first page</span>
+            <IconChevronsLeft />
+          </Button>
+          <Button
+            variant="outline"
+            className="size-8"
+            size="icon"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}>
+            <span className="sr-only">Go to previous page</span>
+            <IconChevronLeft />
+          </Button>
+          <Button
+            variant="outline"
+            className="size-8"
+            size="icon"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}>
+            <span className="sr-only">Go to next page</span>
+            <IconChevronRight />
+          </Button>
+          <Button
+            variant="outline"
+            className="hidden size-8 lg:flex"
+            size="icon"
+            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={!table.getCanNextPage()}>
+            <span className="sr-only">Go to last page</span>
+            <IconChevronsRight />
           </Button>
         </div>
       </div>
-      <TabsContent
-        value="outline"
-        className="relative flex flex-col gap-4 overflow-auto px-4 lg:px-6">
-        <div className="overflow-hidden rounded-lg border">
-          <DndContext
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis]}
-            onDragEnd={handleDragEnd}
-            sensors={sensors}
-            id={sortableId}>
-            <Table>
-              <TableHeader className="bg-muted sticky top-0 z-10">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead key={header.id} colSpan={header.colSpan}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody className="**:data-[slot=table-cell]:first:w-8">
-                {table.getRowModel().rows?.length ? (
-                  <SortableContext items={dataIds} strategy={verticalListSortingStrategy}>
-                    {table.getRowModel().rows.map((row) => (
-                      <DraggableRow key={row.id} row={row} />
-                    ))}
-                  </SortableContext>
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </DndContext>
-        </div>
-        <div className="flex items-center justify-between px-4">
-          <div className="text-muted-foreground hidden flex-1 text-sm lg:flex">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
-          <div className="flex w-full items-center gap-8 lg:w-fit">
-            <div className="hidden items-center gap-2 lg:flex">
-              <Label htmlFor="rows-per-page" className="text-sm font-medium">
-                Rows per page
-              </Label>
-              <Select
-                value={`${table.getState().pagination.pageSize}`}
-                onValueChange={(value) => {
-                  table.setPageSize(Number(value))
-                }}>
-                <SelectTrigger size="sm" className="w-20" id="rows-per-page">
-                  <SelectValue placeholder={table.getState().pagination.pageSize} />
-                </SelectTrigger>
-                <SelectContent side="top">
-                  {[10, 20, 30, 40, 50].map((pageSize) => (
-                    <SelectItem key={pageSize} value={`${pageSize}`}>
-                      {pageSize}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex w-fit items-center justify-center text-sm font-medium">
-              Page {table.getState().pagination.pageIndex + 1} of{" "}
-              {table.getPageCount()}
-            </div>
-            <div className="ml-auto flex items-center gap-2 lg:ml-0">
-              <Button
-                variant="outline"
-                className="hidden h-8 w-8 p-0 lg:flex"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}>
-                <span className="sr-only">Go to first page</span>
-                <IconChevronsLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}>
-                <span className="sr-only">Go to previous page</span>
-                <IconChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                className="size-8"
-                size="icon"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}>
-                <span className="sr-only">Go to next page</span>
-                <IconChevronRight />
-              </Button>
-              <Button
-                variant="outline"
-                className="hidden size-8 lg:flex"
-                size="icon"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}>
-                <span className="sr-only">Go to last page</span>
-                <IconChevronsRight />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </TabsContent>
-      <TabsContent value="past-performance" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
-      <TabsContent value="key-personnel" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
-      <TabsContent value="focus-documents" className="flex flex-col px-4 lg:px-6">
-        <div className="aspect-video w-full flex-1 rounded-lg border border-dashed"></div>
-      </TabsContent>
-    </Tabs>
-  );
+    </div>
+  )
 }
 
-const chartData = [
-  { month: "January", desktop: 186, mobile: 80 },
-  { month: "February", desktop: 305, mobile: 200 },
-  { month: "March", desktop: 237, mobile: 120 },
-  { month: "April", desktop: 73, mobile: 190 },
-  { month: "May", desktop: 209, mobile: 130 },
-  { month: "June", desktop: 214, mobile: 140 },
+// Chart data for property details
+const rentChartData = [
+  { month: "Jan", amount: 8500 },
+  { month: "Feb", amount: 8500 },
+  { month: "Mar", amount: 8500 },
+  { month: "Apr", amount: 0 },
+  { month: "May", amount: 8500 },
+  { month: "Jun", amount: 0 },
 ]
 
 const chartConfig = {
-  desktop: {
-    label: "Desktop",
-    color: "var(--primary)",
-  },
-
-  mobile: {
-    label: "Mobile",
+  amount: {
+    label: "Rent Amount",
     color: "var(--primary)",
   }
 }
 
-function TableCellViewer({
-  item
-}) {
+// Property Detail Viewer
+function PropertyViewer({ item }) {
   const isMobile = useIsMobile()
 
   return (
     <Drawer direction={isMobile ? "bottom" : "right"}>
       <DrawerTrigger asChild>
         <Button variant="link" className="text-foreground w-fit px-0 text-left">
-          {item.header}
+          <div className="flex items-center gap-2">
+            <IconBuilding className="size-4 text-muted-foreground" />
+            {item.propertyName}
+          </div>
         </Button>
       </DrawerTrigger>
       <DrawerContent>
         <DrawerHeader className="gap-1">
-          <DrawerTitle>{item.header}</DrawerTitle>
+          <DrawerTitle>{item.propertyName}</DrawerTitle>
           <DrawerDescription>
-            Showing total visitors for the last 6 months
+            <div className="flex items-center gap-2">
+              <IconMapPin className="size-4" />
+              {item.location}
+            </div>
           </DrawerDescription>
         </DrawerHeader>
         <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
@@ -615,7 +1115,7 @@ function TableCellViewer({
               <ChartContainer config={chartConfig}>
                 <AreaChart
                   accessibilityLayer
-                  data={chartData}
+                  data={rentChartData}
                   margin={{
                     left: 0,
                     right: 10,
@@ -626,120 +1126,188 @@ function TableCellViewer({
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    tickFormatter={(value) => value.slice(0, 3)}
                     hide />
-                  <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                  <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                   <Area
-                    dataKey="mobile"
+                    dataKey="amount"
                     type="natural"
-                    fill="var(--color-mobile)"
+                    fill="var(--color-amount)"
                     fillOpacity={0.6}
-                    stroke="var(--color-mobile)"
-                    stackId="a" />
-                  <Area
-                    dataKey="desktop"
-                    type="natural"
-                    fill="var(--color-desktop)"
-                    fillOpacity={0.4}
-                    stroke="var(--color-desktop)"
-                    stackId="a" />
+                    stroke="var(--color-amount)" />
                 </AreaChart>
               </ChartContainer>
               <Separator />
               <div className="grid gap-2">
                 <div className="flex gap-2 leading-none font-medium">
-                  Trending up by 5.2% this month{" "}
+                  Rent collection trend{" "}
                   <IconTrendingUp className="size-4" />
                 </div>
                 <div className="text-muted-foreground">
-                  Showing total visitors for the last 6 months. This is just
-                  some random text to test the layout. It spans multiple lines
-                  and should wrap around.
+                  Payment history for the last 6 months
                 </div>
               </div>
               <Separator />
             </>
           )}
-          <form className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
-              <Label htmlFor="header">Header</Label>
-              <Input id="header" defaultValue={item.header} />
+              <Label htmlFor="propertyName">Property Name</Label>
+              <Input id="propertyName" defaultValue={item.propertyName} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="type">Type</Label>
-                <Select defaultValue={item.type}>
-                  <SelectTrigger id="type" className="w-full">
-                    <SelectValue placeholder="Select a type" />
+                <Label htmlFor="propertyType">Type</Label>
+                <Select defaultValue={item.propertyType}>
+                  <SelectTrigger id="propertyType">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Table of Contents">
-                      Table of Contents
-                    </SelectItem>
-                    <SelectItem value="Executive Summary">
-                      Executive Summary
-                    </SelectItem>
-                    <SelectItem value="Technical Approach">
-                      Technical Approach
-                    </SelectItem>
-                    <SelectItem value="Design">Design</SelectItem>
-                    <SelectItem value="Capabilities">Capabilities</SelectItem>
-                    <SelectItem value="Focus Documents">
-                      Focus Documents
-                    </SelectItem>
-                    <SelectItem value="Narrative">Narrative</SelectItem>
-                    <SelectItem value="Cover Page">Cover Page</SelectItem>
+                    <SelectItem value="Apartment">Apartment</SelectItem>
+                    <SelectItem value="House">House</SelectItem>
+                    <SelectItem value="Studio">Studio</SelectItem>
+                    <SelectItem value="Commercial">Commercial</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex flex-col gap-3">
                 <Label htmlFor="status">Status</Label>
                 <Select defaultValue={item.status}>
-                  <SelectTrigger id="status" className="w-full">
-                    <SelectValue placeholder="Select a status" />
+                  <SelectTrigger id="status">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Done">Done</SelectItem>
-                    <SelectItem value="In Progress">In Progress</SelectItem>
-                    <SelectItem value="Not Started">Not Started</SelectItem>
+                    <SelectItem value="Occupied">Occupied</SelectItem>
+                    <SelectItem value="Vacant">Vacant</SelectItem>
+                    <SelectItem value="Maintenance">Under Maintenance</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-3">
-                <Label htmlFor="target">Target</Label>
-                <Input id="target" defaultValue={item.target} />
+                <Label htmlFor="rentAmount">Rent Amount (K)</Label>
+                <Input id="rentAmount" type="number" defaultValue={item.rentAmount} />
               </div>
               <div className="flex flex-col gap-3">
-                <Label htmlFor="limit">Limit</Label>
-                <Input id="limit" defaultValue={item.limit} />
+                <Label htmlFor="dueDate">Due Date</Label>
+                <Input id="dueDate" type="date" defaultValue={item.dueDate} />
               </div>
             </div>
             <div className="flex flex-col gap-3">
-              <Label htmlFor="reviewer">Reviewer</Label>
-              <Select defaultValue={item.reviewer}>
-                <SelectTrigger id="reviewer" className="w-full">
-                  <SelectValue placeholder="Select a reviewer" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Eddie Lake">Eddie Lake</SelectItem>
-                  <SelectItem value="Jamik Tashpulatov">
-                    Jamik Tashpulatov
-                  </SelectItem>
-                  <SelectItem value="Emily Whalen">Emily Whalen</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="tenant">Current Tenant</Label>
+              <Input id="tenant" defaultValue={item.tenant} />
             </div>
-          </form>
+          </div>
         </div>
         <DrawerFooter>
-          <Button>Submit</Button>
+          <Button>Save Changes</Button>
           <DrawerClose asChild>
-            <Button variant="outline">Done</Button>
+            <Button variant="outline">Close</Button>
           </DrawerClose>
         </DrawerFooter>
       </DrawerContent>
     </Drawer>
   );
+}
+
+// Tenant Detail Viewer  
+function TenantViewer({ item }) {
+  const isMobile = useIsMobile()
+
+  return (
+    <Drawer direction={isMobile ? "bottom" : "right"}>
+      <DrawerTrigger asChild>
+        <Button variant="link" className="text-foreground w-fit px-0 text-left">
+          <div className="flex items-center gap-2">
+            <IconUser className="size-4 text-muted-foreground" />
+            {item.name}
+          </div>
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader className="gap-1">
+          <DrawerTitle>{item.name}</DrawerTitle>
+          <DrawerDescription>
+            Tenant at {item.property}
+          </DrawerDescription>
+        </DrawerHeader>
+        <div className="flex flex-col gap-4 overflow-y-auto px-4 text-sm">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="tenantName">Full Name</Label>
+              <Input id="tenantName" defaultValue={item.name} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" defaultValue={item.email} />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="phone">Phone</Label>
+                <Input id="phone" defaultValue={item.phone} />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Label htmlFor="property">Property</Label>
+              <Input id="property" defaultValue={item.property} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="leaseStart">Lease Start</Label>
+                <Input id="leaseStart" type="date" defaultValue={item.leaseStart} />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="leaseEnd">Lease End</Label>
+                <Input id="leaseEnd" type="date" defaultValue={item.leaseEnd} />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="rentAmount">Monthly Rent (K)</Label>
+                <Input id="rentAmount" type="number" defaultValue={item.rentAmount} />
+              </div>
+              <div className="flex flex-col gap-3">
+                <Label htmlFor="balance">Current Balance (K)</Label>
+                <Input id="balance" type="number" defaultValue={item.balance} />
+              </div>
+            </div>
+          </div>
+        </div>
+        <DrawerFooter>
+          <Button>Save Changes</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm">
+              <IconPhone className="mr-2 size-4" />
+              WhatsApp
+            </Button>
+            <Button variant="outline" size="sm">
+              <IconMail className="mr-2 size-4" />
+              Email
+            </Button>
+          </div>
+          <DrawerClose asChild>
+            <Button variant="outline">Close</Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
+}
+
+// Default export with sample data
+export default function RealEstateApp() {
+  return (
+    <div className="container mx-auto py-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold">Real Estate Management</h1>
+        <p className="text-muted-foreground">
+          Welcome back, {currentUser.name}. Here's an overview of your properties.
+        </p>
+      </div>
+      <RealEstateDataTable 
+        data={propertyData} 
+        type="properties"
+      />
+    </div>
+  )
 }
